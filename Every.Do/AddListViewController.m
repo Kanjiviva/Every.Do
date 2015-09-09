@@ -18,6 +18,8 @@
 @property (weak, nonatomic) IBOutlet UISegmentedControl *prioritySegment;
 @property (weak, nonatomic) IBOutlet UISwitch *isCompletedSwitch;
 
+- (IBAction)pickUpDate:(UIDatePicker *)sender;
+@property (weak, nonatomic) IBOutlet UIDatePicker *datePicker;
 
 
 @end
@@ -31,11 +33,23 @@
 
 - (IBAction)goBackButton:(id)sender {
 
-    self.object = [[Todo alloc] initWithTitle:self.titleTextField.text descrip:self.descriptionTextField.text priorityNumber:(int)self.prioritySegment.selectedSegmentIndex + 1 isCompleted:self.isCompletedSwitch.on];
+    self.object = [[Todo alloc] initWithTitle:self.titleTextField.text descrip:self.descriptionTextField.text priorityNumber:(int)self.prioritySegment.selectedSegmentIndex + 1 isCompleted:self.isCompletedSwitch.on deadline:self.datePicker.date];
     
     [self.delegate addNewListToArray:self.object];
 
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+-(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    
+    [self.view endEditing:YES];
+}
+
+- (IBAction)pickUpDate:(UIDatePicker *)sender {
+
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    
+    [dateFormatter setDateFormat:@"dd-MM-yyyy HH:mm"];
+
+}
 @end

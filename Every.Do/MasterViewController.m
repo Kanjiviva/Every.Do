@@ -17,8 +17,10 @@
 @property (strong, nonatomic) IBOutlet UISwipeGestureRecognizer *swipeToComplete;
 - (IBAction)swipeToComplete:(UISwipeGestureRecognizer *)sender;
 
-
 @property NSMutableArray *objects;
+
+@property (strong, nonatomic) NSMutableArray *sectionArray;
+
 @end
 
 @implementation MasterViewController
@@ -31,16 +33,33 @@
     [super viewDidLoad];
 
     self.navigationItem.leftBarButtonItem = self.editButtonItem;
+    
+    self.sectionArray = [[NSMutableArray alloc] init];
+    
+    NSMutableArray *sectionOne = [[NSMutableArray alloc] init];
+    NSMutableArray *sectionTwo = [[NSMutableArray alloc] init];
+    
+    [self.sectionArray addObject:sectionOne];
+    [self.sectionArray addObject:sectionTwo];
+    
+    NSDate *today = [[NSDate alloc] init];
+    NSLog(@"%@", today);
+    
+    NSTimeInterval secondsPerDay = 60 * 60 * 24;
+    NSDate *tomorrow = [NSDate dateWithTimeIntervalSinceNow:secondsPerDay];
+    NSLog(@"%@", tomorrow);
 
-    Todo *todo1 = [[Todo alloc] initWithTitle:@"School" descrip:@"Go to class at 9am and don't be late" priorityNumber:1 isCompleted:NO];
-    Todo *todo2 = [[Todo alloc] initWithTitle:@"Eat" descrip:@"Eat Lunch. Make sure to eat healthy" priorityNumber:3 isCompleted:NO];
-    Todo *todo3 = [[Todo alloc] initWithTitle:@"Homework" descrip:@"Complete the assignment so I can go home early!!" priorityNumber:2 isCompleted:NO];
+    Todo *todo1 = [[Todo alloc] initWithTitle:@"School" descrip:@"Go to class at 9am and don't be late" priorityNumber:1 isCompleted:YES deadline:today];
+    Todo *todo2 = [[Todo alloc] initWithTitle:@"Eat" descrip:@"Eat Lunch. Make sure to eat healthy" priorityNumber:3 isCompleted:YES deadline:tomorrow];
+    Todo *todo3 = [[Todo alloc] initWithTitle:@"Homework" descrip:@"Complete the assignment so I can go home early!!" priorityNumber:2 isCompleted:NO deadline:today];
     
     self.objects = [NSMutableArray new];
     
     [self.objects addObject:todo1];
     [self.objects addObject:todo2];
     [self.objects addObject:todo3];
+    
+    [self divideArrayToSection];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -71,35 +90,67 @@
     }
 }
 
+#pragma mark - Helper methods
+
+- (void)divideArrayToSection {
+    
+    for (Todo *todo in self.objects) {
+        if (!todo.isCompleted) {
+            
+            
+            //not completed section
+            [self.sectionArray[0] addObject:todo];
+            
+        } else {
+            
+            //completed section
+            [self.sectionArray[1] addObject:todo];
+        }
+    }
+
+}
+
 #pragma mark - Add list delegate
 
 - (void)addNewListToArray:(Todo *)object {
     
-    [self.objects addObject:object];
+    if (object.isCompleted) {
+        [self.sectionArray[1] addObject:object];
+    } else {
+        [self.sectionArray[0] addObject:object];
+    }
     
 }
 
-#pragma mark - Table View
+#pragma mark - Table View data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 1;
+    return [self.sectionArray count];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return self.objects.count;
+    return [self.sectionArray[section] count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     CustomTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
     
+    NSArray *getSection = self.sectionArray[indexPath.section];
+    
     // config cell
-    Todo *object = [self.objects objectAtIndex:indexPath.row];
+    Todo *object = [getSection objectAtIndex:indexPath.row];
     
 //    NSLog(@"Object is now %@", object.todoTitle);
     
     cell.titleLabel.text = object.todoTitle;
     cell.descriptionLabel.text = object.todoDescription;
     cell.priorityNumberLabel.text = [NSString stringWithFormat:@"%i", object.todoPriorityNumber];
+    
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    
+    [dateFormatter setDateFormat:@"dd-MM-yyyy HH:mm"];
+
+    cell.completedDate.text = [dateFormatter stringFromDate:object.deadline];
     
     if (object.isCompleted) {
         cell.isCompletedLabel.text = @"Completed";
@@ -124,24 +175,68 @@
     }
 }
 
+-(BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
+    return YES;
+}
+
+-(void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
+    
+    if (sourceIndexPath.section == destinationIndexPath.section) {
+        NSInteger sourceRow = sourceIndexPath.row;
+        NSInteger destRow = destinationIndexPath.row;
+        id object = [self.objects objectAtIndex:sourceRow];
+        
+        [self.objects removeObjectAtIndex:sourceRow];
+        [self.objects insertObject:object atIndex:destRow];
+        
+        
+    } else {
+        [self.tableView reloadData];
+    }
+    
+    
+    
+    
+}
+
+-(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    
+    if (section == 0) {
+        return [NSString stringWithFormat:@"Completed"];
+    } else if (section == 1){
+        return [NSString stringWithFormat:@"Not Completed"];
+    } else {
+        return nil;
+    }
+    
+    
+//    return [NSString stringWithFormat:@"Completed %li", (long)section + 1];
+}
+
 #pragma mark - IBActions
 
 - (IBAction)swipeToComplete:(UISwipeGestureRecognizer *)sender {
     
     NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:[sender locationInView:self.tableView]];
     
-    Todo *object = [self.objects objectAtIndex:indexPath.row];
+    NSMutableArray *section = self.sectionArray[indexPath.section];
+    
+    Todo *object = [section objectAtIndex:indexPath.row];
     
     
-    if (!object.isCompleted) {
+    if (object.isCompleted == NO) {
         object.isCompleted = YES;
         
-        
-        [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self.sectionArray[0] removeObject:object];
+        [self.sectionArray[1] addObject:object];
+//        [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self.tableView reloadData];
     }
     else {
+        
         NSLog(@"Completed already");
     }
     
 }
+
 @end

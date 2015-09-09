@@ -14,7 +14,8 @@
 @property (strong, nonatomic) NSString *todoDescription;
 @property (assign, nonatomic) int todoPriorityNumber;
 @property (assign, nonatomic) BOOL isCompleted;
+@property (strong, nonatomic) NSDate *deadline;
 
-- (instancetype)initWithTitle:(NSString *)title descrip:(NSString *)descrip priorityNumber:(int)priorityNumber isCompleted:(BOOL)isCompleted;
+- (instancetype)initWithTitle:(NSString *)title descrip:(NSString *)descrip priorityNumber:(int)priorityNumber isCompleted:(BOOL)isCompleted deadline:(NSDate *)deadline;
 
 @end

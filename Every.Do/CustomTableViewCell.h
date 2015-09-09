@@ -14,5 +14,6 @@
 @property (strong, nonatomic) IBOutlet UILabel *descriptionLabel;
 @property (strong, nonatomic) IBOutlet UILabel *priorityNumberLabel;
 @property (strong, nonatomic) IBOutlet UILabel *isCompletedLabel;
+@property (strong, nonatomic) IBOutlet UILabel *completedDate;
 
 @end
